@@ -54,6 +54,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Mount Routes
+app.use('/api/auth', require('./routes/authRoutes'));
+
 // Root route
 app.get('/', (req, res) => {
   res.json({

@@ -1,62 +1,98 @@
-import React, { useState, useEffect } from 'react';
-import { checkHealth } from '../services/api';
-import { CheckSquare, Database, Server, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { CheckSquare, Database, Server, RefreshCw, AlertCircle, LogOut, UserPlus, LogIn, User } from 'lucide-react';
 
 export default function Navbar({ onRefreshHealth, healthStatus, loadingHealth }) {
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <header className="navbar">
       <div className="container navbar-inner">
         {/* Brand */}
-        <a href="/" className="brand">
+        <Link to="/" className="brand">
           <div className="brand-icon">
             <CheckSquare size={22} />
           </div>
           <span className="brand-title">
             Task<span>Pulse</span>
           </span>
-        </a>
+        </Link>
 
-        {/* System Health / DB Status Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {/* Right Section: Health Badges & User Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          {/* Health Status */}
           {healthStatus ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {/* Server Status */}
+            <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <span className="badge badge-connected" title="Express API is responding">
                 <span className="pulse-dot"></span>
-                <Server size={13} style={{ marginRight: '2px' }} />
-                API: Port 5000
+                <Server size={12} style={{ marginRight: '2px' }} />
+                Port 5000
               </span>
 
-              {/* Database Status */}
               {healthStatus.database?.isInMemory ? (
                 <span className="badge badge-in-memory" title="Running in zero-setup in-memory MongoDB mode">
-                  <Database size={13} style={{ marginRight: '2px' }} />
-                  MongoDB: In-Memory (Dev)
+                  <Database size={12} style={{ marginRight: '2px' }} />
+                  In-Memory
                 </span>
               ) : (
-                <span className="badge badge-connected" title={`Connected to MongoDB: ${healthStatus.database?.host}`}>
-                  <Database size={13} style={{ marginRight: '2px' }} />
-                  MongoDB: {healthStatus.database?.host || 'Connected'}
+                <span className="badge badge-connected" title={`Connected to MongoDB Atlas: ${healthStatus.database?.host}`}>
+                  <Database size={12} style={{ marginRight: '2px' }} />
+                  Atlas Cloud
                 </span>
               )}
             </div>
           ) : (
             <span className="badge badge-disconnected">
-              <AlertCircle size={13} style={{ marginRight: '2px' }} />
-              API: Offline
+              <AlertCircle size={12} style={{ marginRight: '2px' }} />
+              Offline
             </span>
           )}
 
-          {/* Refresh Health Button */}
-          <button 
-            className="btn btn-secondary btn-sm" 
-            onClick={onRefreshHealth} 
-            disabled={loadingHealth}
-            title="Check backend health status"
-          >
-            <RefreshCw size={13} className={loadingHealth ? 'spin' : ''} />
-            {loadingHealth ? 'Checking...' : 'Check Status'}
-          </button>
+          {/* User Auth Buttons or Profile */}
+          {isAuthenticated && user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div className="nav-user-chip">
+                <div className="avatar-chip">
+                  {getInitials(user.name)}
+                </div>
+                <span className="nav-user-name">{user.name}</span>
+              </div>
+              <button 
+                onClick={handleLogout} 
+                className="btn btn-secondary btn-sm"
+                title="Sign out of your account"
+              >
+                <LogOut size={14} />
+                <span className="hide-mobile">Sign Out</span>
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Link to="/login" className="btn btn-secondary btn-sm">
+                <LogIn size={14} /> Sign In
+              </Link>
+              <Link to="/register" className="btn btn-primary btn-sm">
+                <UserPlus size={14} /> Register
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>
