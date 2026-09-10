@@ -24,6 +24,12 @@ export default function LoginPage() {
       return;
     }
 
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z]{2,})+$/;
+    if (!emailRegex.test(email.trim()) || email.includes('..')) {
+      setLocalError('Please enter a valid email format (e.g. name@domain.com)');
+      return;
+    }
+
     setSubmitting(true);
     const result = await login(email, password);
     setSubmitting(false);

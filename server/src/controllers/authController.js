@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const { isValidEmailFormat } = require('../utils/validateEmail');
 
 /**
  * @desc    Register a new user
@@ -15,6 +16,13 @@ const register = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Please provide name, email, and password'
+      });
+    }
+
+    if (!isValidEmailFormat(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address (e.g. user@domain.com)'
       });
     }
 
@@ -76,6 +84,13 @@ const login = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Please provide both email and password'
+      });
+    }
+
+    if (!isValidEmailFormat(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email address format (e.g. user@domain.com)'
       });
     }
 
