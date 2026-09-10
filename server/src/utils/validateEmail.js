@@ -1,5 +1,7 @@
+const dns = require('dns').promises;
+
 /**
- * RFC 5322 Compliant Email Format Validator
+ * RFC 5322 Compliant Email Format Validator (Layer 1)
  * 
  * Validates:
  * 1. Total length <= 254 characters (RFC 5321 limit)
@@ -51,4 +53,74 @@ const isValidEmailFormat = (email) => {
   return emailRegex.test(trimmed);
 };
 
-module.exports = { isValidEmailFormat };
+/**
+ * Real-Time DNS MX Record Verification (Layer 2)
+ * Queries global DNS servers to verify that the domain actually exists
+ * and has configured Mail Exchange (MX) servers capable of receiving emails.
+ * 
+ * @param {string} email
+ * @returns {Promise<{ isValid: boolean, domain: string, message?: string }>}
+ */
+const verifyEmailDomain = async (email) => {
+  if (!email || !email.includes('@')) {
+    return { isValid: false, message: 'Invalid email address provided.' };
+  }
+
+  const domain = email.trim().split('@')[1].toLowerCase();
+
+  // Fast-path whitelist for top email providers (guarantees sub-millisecond response)
+  const trustedProviders = [
+    'gmail.com',
+    'outlook.com',
+    'hotmail.com',
+    'yahoo.com',
+    'icloud.com',
+    'proton.me',
+    'protonmail.com',
+    'aol.com',
+    'zoho.com',
+    'live.com',
+    'msn.com'
+  ];
+
+  if (trustedProviders.includes(domain)) {
+    return { isValid: true, domain };
+  }
+
+  // Allow demo domain in development mode for seeded demo testing
+  if (process.env.NODE_ENV !== 'production' && domain === 'example.com') {
+    return { isValid: true, domain };
+  }
+
+  // Live DNS lookup for MX records on all other custom or unknown domains
+  try {
+    const mxRecords = await dns.resolveMx(domain);
+
+    if (!mxRecords || mxRecords.length === 0) {
+      return {
+        isValid: false,
+        domain,
+        message: `The domain "@${domain}" does not have any active mail servers configured to receive emails.`
+      };
+    }
+
+    return { isValid: true, domain, mxRecords };
+  } catch (error) {
+    if (error.code === 'ENOTFOUND' || error.code === 'ENODATA' || error.code === 'SERVFAIL') {
+      return {
+        isValid: false,
+        domain,
+        message: `The domain "@${domain}" does not exist on the internet or cannot receive email.`
+      };
+    }
+
+    // Graceful fallback for network/DNS timeouts in restricted dev environments
+    console.warn(`[DNS Warning] MX resolution skipped for "${domain}": ${error.message}`);
+    return { isValid: true, domain, warning: 'DNS verification bypassed due to network timeout' };
+  }
+};
+
+module.exports = {
+  isValidEmailFormat,
+  verifyEmailDomain
+};

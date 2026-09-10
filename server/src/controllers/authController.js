@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
-const { isValidEmailFormat } = require('../utils/validateEmail');
+const { isValidEmailFormat, verifyEmailDomain } = require('../utils/validateEmail');
 
 /**
  * @desc    Register a new user
@@ -19,10 +19,20 @@ const register = async (req, res, next) => {
       });
     }
 
+    // Layer 1: Format Validation
     if (!isValidEmailFormat(email)) {
       return res.status(400).json({
         success: false,
         message: 'Please provide a valid email address (e.g. user@domain.com)'
+      });
+    }
+
+    // Layer 2: DNS MX Record Domain Verification
+    const domainCheck = await verifyEmailDomain(email);
+    if (!domainCheck.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: domainCheck.message || 'The email domain does not exist or cannot receive mail.'
       });
     }
 
