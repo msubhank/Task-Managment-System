@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { TaskProvider } from './context/TaskContext';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
@@ -65,11 +66,19 @@ function AppContent() {
   );
 }
 
+// Helper component to ensure TaskProvider resets state on user switch
+function AuthenticatedTaskProvider({ children }) {
+  const { user } = useAuth();
+  return <TaskProvider key={user?._id || 'guest'}>{children}</TaskProvider>;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppContent />
+        <AuthenticatedTaskProvider>
+          <AppContent />
+        </AuthenticatedTaskProvider>
       </AuthProvider>
     </BrowserRouter>
   );
