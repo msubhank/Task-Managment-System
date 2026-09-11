@@ -2,11 +2,13 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import * as taskService from '../services/taskService';
 import { useDebounce } from '../hooks/useDebounce';
 import { useAuth } from './AuthContext';
+import { useToast } from './ToastContext';
 
 const TaskContext = createContext(null);
 
 export const TaskProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [tasks, setTasks] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -74,6 +76,17 @@ export const TaskProvider = ({ children }) => {
     }
   }, [user?._id, isAuthenticated, loadTasks]);
 
+  // Status label formatter helper
+  const formatStatusLabel = (st) => {
+    switch (st) {
+      case 'todo': return 'To Do';
+      case 'in_progress': return 'In Progress';
+      case 'in_review': return 'In Review';
+      case 'completed': return 'Completed 🎉';
+      default: return st;
+    }
+  };
+
   // Create Task
   const addTask = async (taskData) => {
     try {
@@ -81,13 +94,13 @@ export const TaskProvider = ({ children }) => {
       if (res.success) {
         setTasks((prev) => [res.task, ...prev]);
         setTotalCount((prev) => prev + 1);
+        toast.success(`Task "${res.task.title}" created successfully!`);
         return { success: true };
       }
     } catch (err) {
-      return {
-        success: false,
-        message: err.response?.data?.message || 'Could not create task'
-      };
+      const msg = err.response?.data?.message || 'Could not create task';
+      toast.error(msg);
+      return { success: false, message: msg };
     }
   };
 
@@ -97,13 +110,13 @@ export const TaskProvider = ({ children }) => {
       const res = await taskService.updateTask(id, taskData);
       if (res.success) {
         setTasks((prev) => prev.map((t) => (t._id === id ? res.task : t)));
+        toast.success('Task updated successfully!');
         return { success: true };
       }
     } catch (err) {
-      return {
-        success: false,
-        message: err.response?.data?.message || 'Could not update task'
-      };
+      const msg = err.response?.data?.message || 'Could not update task';
+      toast.error(msg);
+      return { success: false, message: msg };
     }
   };
 
@@ -111,20 +124,21 @@ export const TaskProvider = ({ children }) => {
   const removeTask = async (id) => {
     // Optimistic removal
     const previousTasks = [...tasks];
+    const targetTask = tasks.find((t) => t._id === id);
     setTasks((prev) => prev.filter((t) => t._id !== id));
     setTotalCount((prev) => Math.max(0, prev - 1));
 
     try {
       await taskService.deleteTask(id);
+      toast.info(`Task "${targetTask?.title || 'item'}" deleted`);
       return { success: true };
     } catch (err) {
       // Rollback
       setTasks(previousTasks);
       setTotalCount(previousTasks.length);
-      return {
-        success: false,
-        message: err.response?.data?.message || 'Failed to delete task'
-      };
+      const msg = err.response?.data?.message || 'Failed to delete task';
+      toast.error(msg);
+      return { success: false, message: msg };
     }
   };
 
@@ -140,32 +154,42 @@ export const TaskProvider = ({ children }) => {
 
     try {
       await taskService.updateTaskStatus(id, newStatus);
+      toast.info(`Moved to ${formatStatusLabel(newStatus)}`);
     } catch (err) {
       // Rollback on failure
       setTasks(previousTasks);
+      toast.error('Failed to update task status');
     }
   };
 
   // Toggle Subtask (Optimistic)
   const toggleSubtaskItem = async (taskId, subtaskId) => {
     const previousTasks = [...tasks];
+    let isNowCompleted = false;
+
     setTasks((prev) =>
       prev.map((t) => {
         if (t._id !== taskId) return t;
         return {
           ...t,
-          subtasks: t.subtasks.map((st) =>
-            st._id === subtaskId ? { ...st, completed: !st.completed } : st
-          )
+          subtasks: t.subtasks.map((st) => {
+            if (st._id === subtaskId) {
+              isNowCompleted = !st.completed;
+              return { ...st, completed: isNowCompleted };
+            }
+            return st;
+          })
         };
       })
     );
 
     try {
       await taskService.toggleSubtask(taskId, subtaskId);
+      toast.success(isNowCompleted ? 'Subtask marked complete' : 'Subtask reopened', 2500);
     } catch (err) {
       // Rollback
       setTasks(previousTasks);
+      toast.error('Failed to update subtask');
     }
   };
 
