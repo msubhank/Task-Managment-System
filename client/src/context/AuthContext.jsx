@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { loginUser, registerUser, getCurrentUser } from '../services/authService';
+import { useToast } from './ToastContext';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  const { toast } = useToast();
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
@@ -43,11 +45,13 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(res.user));
         setToken(res.token);
         setUser(res.user);
+        toast.success(`Welcome back, ${res.user.name?.split(' ')[0] || 'User'}! 👋`);
         return { success: true };
       }
     } catch (err) {
       const message = err.response?.data?.message || 'Login failed. Please check your credentials.';
       setError(message);
+      toast.error(message);
       return { success: false, message };
     }
   };
@@ -62,11 +66,13 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(res.user));
         setToken(res.token);
         setUser(res.user);
+        toast.success('Account created! Welcome to TaskPulse.');
         return { success: true };
       }
     } catch (err) {
       const message = err.response?.data?.message || 'Registration failed. Please try again.';
       setError(message);
+      toast.error(message);
       return { success: false, message };
     }
   };
@@ -78,6 +84,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     setError(null);
+    toast.info('You have been logged out.');
   };
 
   return (
