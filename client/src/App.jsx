@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TaskProvider } from './context/TaskContext';
+import { ToastProvider } from './context/ToastContext';
+import ToastContainer from './components/ToastContainer';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
@@ -34,6 +36,9 @@ function AppContent() {
 
   return (
     <div className="app-layout">
+      {/* Global Toast Notifications Container */}
+      <ToastContainer />
+
       {/* Sticky Top Navbar */}
       <Navbar 
         onRefreshHealth={fetchHealth} 
@@ -75,11 +80,13 @@ function AuthenticatedTaskProvider({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AuthenticatedTaskProvider>
-          <AppContent />
-        </AuthenticatedTaskProvider>
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AuthenticatedTaskProvider>
+            <AppContent />
+          </AuthenticatedTaskProvider>
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }
