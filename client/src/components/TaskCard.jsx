@@ -10,7 +10,8 @@ import {
   Tag, 
   ChevronDown, 
   ChevronUp, 
-  AlertTriangle 
+  AlertTriangle,
+  GripVertical
 } from 'lucide-react';
 
 export default function TaskCard({ task }) {
@@ -49,7 +50,11 @@ export default function TaskCard({ task }) {
     <div className={`task-card glass-card ${task.status === 'completed' ? 'task-card-completed' : ''}`}>
       {/* Top Header: Category, Priority, and Actions */}
       <div className="task-card-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+          <span className="drag-grip-indicator" title="Drag to move task">
+            <GripVertical size={14} />
+          </span>
+
           {/* Priority Badge */}
           <span
             className="badge"
@@ -73,11 +78,12 @@ export default function TaskCard({ task }) {
         </div>
 
         {/* Action Controls */}
-        <div className="task-card-actions">
+        <div className="task-card-actions" onMouseDown={(e) => e.stopPropagation()}>
           <button
             onClick={() => openEditModal(task)}
             className="icon-btn"
             title="Edit Task"
+            type="button"
           >
             <Edit3 size={15} />
           </button>
@@ -89,6 +95,7 @@ export default function TaskCard({ task }) {
             }}
             className="icon-btn icon-btn-danger"
             title="Delete Task"
+            type="button"
           >
             <Trash2 size={15} />
           </button>
@@ -103,7 +110,7 @@ export default function TaskCard({ task }) {
 
       {/* Subtasks Progress Bar & Toggle */}
       {totalSubtasks > 0 && (
-        <div className="task-subtasks-section">
+        <div className="task-subtasks-section" onMouseDown={(e) => e.stopPropagation()}>
           <div
             className="subtasks-summary-bar"
             onClick={() => setShowSubtasks(!showSubtasks)}
@@ -168,7 +175,7 @@ export default function TaskCard({ task }) {
         </div>
 
         {/* Quick Status Switcher Dropdown */}
-        <div className="status-select-box">
+        <div className="status-select-box" onMouseDown={(e) => e.stopPropagation()}>
           <select
             value={task.status}
             onChange={(e) => changeTaskStatus(task._id, e.target.value)}
