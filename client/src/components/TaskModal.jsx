@@ -5,7 +5,7 @@ import { X, Plus, Trash2, Calendar, CheckSquare, Tag, AlertCircle, Sparkles } fr
 export default function TaskModal() {
   const { isModalOpen, activeTask, closeModal, addTask, editTask } = useTasks();
 
-  const isEdit = !!activeTask;
+  const isEdit = Boolean(activeTask && activeTask._id);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');

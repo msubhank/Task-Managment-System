@@ -4,22 +4,19 @@ import { useTasks } from '../context/TaskContext';
 import FilterBar from '../components/FilterBar';
 import TaskCard from '../components/TaskCard';
 import TaskModal from '../components/TaskModal';
+import KanbanBoard from '../components/KanbanBoard';
+import AnalyticsOverview from '../components/AnalyticsOverview';
 import { 
-  CheckSquare, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
-  Plus, 
   ShieldCheck, 
-  LogOut, 
-  Sparkles,
-  Layers,
-  Inbox
+  Plus, 
+  AlertCircle, 
+  Inbox,
+  Sparkles
 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
-  const { tasks, loading, error, counts, openCreateModal } = useTasks();
+  const { user } = useAuth();
+  const { tasks, loading, error, counts, viewMode, openCreateModal } = useTasks();
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -75,45 +72,66 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Filter Bar with Search, Status Tabs, and Priority dropdown */}
+      {/* Filter Bar with View Mode Switcher */}
       <FilterBar />
 
-      {/* Main Task Cards Grid */}
-      <div className="tasks-container">
-        {loading ? (
-          /* Loading Skeletons */
-          <div className="tasks-grid">
-            {[1, 2, 3, 4].map((n) => (
-              <div key={n} className="task-skeleton glass-card" />
-            ))}
-          </div>
-        ) : error ? (
-          /* Error State */
-          <div className="glass-card empty-state-box">
-            <AlertCircle size={40} style={{ color: 'var(--status-urgent)' }} />
-            <h3>Unable to load tasks</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>{error}</p>
-          </div>
-        ) : tasks.length === 0 ? (
-          /* Empty State */
-          <div className="glass-card empty-state-box">
-            <div className="empty-state-icon">
-              <Inbox size={42} />
+      {/* View Mode Switching: Kanban vs List vs Analytics */}
+      <div className="dashboard-view-content" style={{ marginTop: '1.5rem' }}>
+        {viewMode === 'analytics' ? (
+          /* Analytics Dashboard View */
+          <AnalyticsOverview />
+        ) : viewMode === 'kanban' ? (
+          /* Kanban Board View */
+          loading ? (
+            <div className="kanban-skeleton-grid">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="kanban-column-skeleton glass-card" />
+              ))}
             </div>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>No tasks found</h3>
-            <p style={{ color: 'var(--text-secondary)', maxWidth: '420px', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-              No tasks matched your search or filters. Create a new task to get started organizing your project!
-            </p>
-            <button onClick={openCreateModal} className="btn btn-primary">
-              <Plus size={18} /> Create Your First Task
-            </button>
-          </div>
+          ) : error ? (
+            <div className="glass-card empty-state-box">
+              <AlertCircle size={40} style={{ color: 'var(--status-urgent)' }} />
+              <h3>Unable to load tasks</h3>
+              <p style={{ color: 'var(--text-secondary)' }}>{error}</p>
+            </div>
+          ) : (
+            <KanbanBoard />
+          )
         ) : (
-          /* Tasks Grid */
-          <div className="tasks-grid fade-in">
-            {tasks.map((task) => (
-              <TaskCard key={task._id} task={task} />
-            ))}
+          /* List View */
+          <div className="tasks-container">
+            {loading ? (
+              <div className="tasks-grid">
+                {[1, 2, 3, 4].map((n) => (
+                  <div key={n} className="task-skeleton glass-card" />
+                ))}
+              </div>
+            ) : error ? (
+              <div className="glass-card empty-state-box">
+                <AlertCircle size={40} style={{ color: 'var(--status-urgent)' }} />
+                <h3>Unable to load tasks</h3>
+                <p style={{ color: 'var(--text-secondary)' }}>{error}</p>
+              </div>
+            ) : tasks.length === 0 ? (
+              <div className="glass-card empty-state-box">
+                <div className="empty-state-icon">
+                  <Inbox size={42} />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>No tasks found</h3>
+                <p style={{ color: 'var(--text-secondary)', maxWidth: '420px', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                  No tasks matched your search or filters. Create a new task to get started organizing your project!
+                </p>
+                <button onClick={openCreateModal} className="btn btn-primary">
+                  <Plus size={18} /> Create Your First Task
+                </button>
+              </div>
+            ) : (
+              <div className="tasks-grid fade-in">
+                {tasks.map((task) => (
+                  <TaskCard key={task._id} task={task} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

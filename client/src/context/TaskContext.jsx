@@ -12,6 +12,9 @@ export const TaskProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // View Mode: 'kanban' | 'list' | 'analytics'
+  const [viewMode, setViewMode] = useState('kanban');
+
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -127,6 +130,9 @@ export const TaskProvider = ({ children }) => {
 
   // Change Task Status (Optimistic)
   const changeTaskStatus = async (id, newStatus) => {
+    const existing = tasks.find((t) => t._id === id);
+    if (existing && existing.status === newStatus) return;
+
     const previousTasks = [...tasks];
     setTasks((prev) =>
       prev.map((t) => (t._id === id ? { ...t, status: newStatus } : t))
@@ -164,8 +170,8 @@ export const TaskProvider = ({ children }) => {
   };
 
   // Modal helpers
-  const openCreateModal = () => {
-    setActiveTask(null);
+  const openCreateModal = (initialData = null) => {
+    setActiveTask(initialData);
     setIsModalOpen(true);
   };
 
@@ -204,6 +210,8 @@ export const TaskProvider = ({ children }) => {
         sortBy,
         setSortBy,
         counts,
+        viewMode,
+        setViewMode,
         isModalOpen,
         activeTask,
         openCreateModal,
