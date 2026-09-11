@@ -38,3 +38,8 @@ export const toggleSubtask = async (id, subtaskId) => {
   const response = await api.patch(`/tasks/${id}/subtasks/${subtaskId}`);
   return response.data;
 };
+
+export const fetchDashboardStats = async () => {
+  const response = await api.get('/dashboard/stats');
+  return response.data;
+};
